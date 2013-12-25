@@ -14,14 +14,20 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public abstract class Pool<T> {
 
 	private ConcurrentLinkedQueue<T> objects;
-
+	private int maxPoolSize;
+	private int objectsGiven;
 	abstract protected T createObject();
 
 	/**
 	 * Create a new Pool.
 	 */
 	public Pool() {
-		objects = new ConcurrentLinkedQueue<T>();
+		this(Integer.MAX_VALUE);
+	}
+	
+	public Pool(int maxPoolSize) {
+		this.maxPoolSize = maxPoolSize;
+		objects = new ConcurrentLinkedQueue<>();
 	}
 
 	/**
@@ -30,8 +36,10 @@ public abstract class Pool<T> {
 	 * @return
 	 */
 	public synchronized T getObject() {
-		if (objects.size() == 0) {
+		if (objects.size() == 0 && objectsGiven <= maxPoolSize) {
 			objects.add(createObject());
+		} else if (objects.size() + objectsGiven > maxPoolSize) {
+			return null;
 		}
 
 		return objects.remove();
